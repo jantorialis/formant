@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>formant</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=M+PLUS+Rounded+1c:wght@400;500;700;800&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <header>
+    <div class="logo">formant <span>♪</span></div>
+    <div class="tagline">a vocal synth... thing. i'm not even sure anymore</div>
+  </header>
+
+  <main>
+
+    <div class="panel" id="panel-input">
+      <div class="panel-num">01</div>
+      <div class="panel-title">write something</div>
+      <div class="hint">literally anything</div>
+      <div class="input-row">
+        <input type="text" id="lyricInput" class="lyric-input"
+          placeholder="type words!" autocomplete="off" spellcheck="false" />
+        <button class="btn btn-pink" id="parseBtn">parse →</button>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-roll" style="display:none;">
+      <div class="panel-num">02</div>
+      <div class="panel-title">tune your words</div>
+      <div class="hint">click a word, then edit syllables in the piano roll below!</div>
+
+      <div class="word-chips" id="wordChips"></div>
+
+      <div class="word-editor" id="wordEditor" style="display:none;">
+        <div class="editor-top">
+          <span class="editor-word-name" id="editorWord">word</span>
+        </div>
+
+        <div class="piano-roll-section">
+          <div class="piano-roll-label">
+            <span class="piano-roll-label-text" onclick="togglePianoRoll()">
+              <span class="piano-roll-label-arrow open" id="rollArrow">▶</span>
+              piano roll
+            </span>
+            <div class="piano-roll-octave-btns" id="octaveBtns"></div>
+          </div>
+          <div class="piano-roll-body" id="pianoRollBody">
+            <div class="piano-roll-wrap">
+              <div class="piano-keys" id="pianoKeys"></div>
+              <div class="piano-grid-scroll">
+                <div class="piano-grid" id="pianoGrid"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="hint" style="margin-bottom:0.5rem;margin-top:1rem">syllables</div>
+        <div class="syllable-strip" id="sylStrip"></div>
+
+        <div class="syl-editor" id="sylEditor" style="display:none;">
+          <div class="syl-editor-title">editing syllable</div>
+
+          <div class="ctrl-row" style="margin-bottom:0.8rem">
+            <span class="ctrl-label">text</span>
+            <input type="text" id="sylTextInput"
+              style="font-family:var(--mono);font-size:0.8rem;font-weight:700;padding:5px 10px;border-radius:100px;border:2px solid var(--border);background:var(--bg);outline:none;width:90px;color:var(--text)" />
+          </div>
+
+          <div class="syl-editor-title">phoneme</div>
+          <div class="vowel-picker" id="phonemePicker" style="margin-bottom:0.9rem"></div>
+
+          <div class="syl-editor-title">note <span style="font-size:0.65rem;font-weight:400;opacity:0.6">— or use the piano roll above!</span></div>
+          <div class="note-picker" id="notePicker" style="margin-bottom:0.9rem"></div>
+
+          <div class="ctrl-row">
+            <span class="ctrl-label">duration</span>
+            <input type="range" min="0.05" max="5.0" step="0.05" value="0.2" id="sylDur"
+              oninput="updateSylParam('dur',this.value)" style="flex:1" />
+            <span class="ctrl-val" id="sylDurVal">0.4s</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel" id="panel-play" style="display:none;">
+      <div class="panel-num">03</div>
+      <div class="panel-title">perform</div>
+
+      <div class="action-bar">
+        <button class="btn btn-sing" id="playBtn">▶ sing</button>
+        <button class="btn btn-ghost" id="stopBtn" disabled>■ stop</button>
+        <button class="btn btn-yellow" onclick="generateShareLink()">share</button>
+        <button id="downloadBtn" class="btn btn-mint">↓ download wav</button>
+      </div>
+
+      <div class="status" id="statusBar"></div>
+
+      <div class="share-box" id="shareBox" style="display:none;">
+        <input type="text" id="shareUrl" class="share-url" readonly />
+        <button class="btn-sm" onclick="copyShare()">copy link</button>
+      </div>
+
+      <button class="btn btn-yellow" id="saveBtn">save</button>
+      <button class="btn btn-mint" id="loadBtn">load</button>
+      <button class="btn btn-ghost" id="clearSaveBtn">clear save</button>
+    </div>
+
+
+
+    <div class="panel" id="panel-help">
+      <div class="panel-num">?</div>
+      <div style="display:flex;align-items:center;justify-content:space-between;cursor:pointer" onclick="toggleHelp()">
+        <div class="panel-title" style="margin-bottom:0">how does this work?</div>
+        <span id="helpArrow" style="font-family:var(--mono);font-size:1rem;color:var(--text-soft)">▸</span>
+      </div>
+
+      <div id="helpBody" style="display:none;margin-top:1.2rem">
+
+        <div class="help-section">
+          <div class="help-heading">the basics</div>
+          <p class="help-p">formant is a <b>vocal synth</b> that generates voice-like sounds using <b>formant synthesis</b>, the same idea behind early vocaloids and text-to-speech. it creates a buzzy tone and shapes it with filters to produce sounds, all entirely in your browser!</p>
+          <p class="help-p">type something → parse → click a word → use the piano roll to set pitches → sing!</p>
+        </div>
+
+        <div class="help-section">
+          <div class="help-heading">piano roll</div>
+          <p class="help-p">the piano roll shows all syllables of the selected word as colored blocks. each column is a syllable, and the rows are notes (c3 at the bottom, b5 at the top). click any cell in a column to move that syllable to that pitch, it updates live! the active syllable is highlighted.</p>
+        </div>
+
+        <div class="help-section">
+          <div class="help-heading">syllables</div>
+          <p class="help-p">each word auto-splits into syllables. you can add more, remove them, or change the text label. every syllable is its own note + phoneme, so you can sing different pitches across one word!</p>
+        </div>
+
+        <div class="help-section">
+          <div class="help-heading">vowels</div>
+          <p class="help-p">a phoneme is the sound the syllable makes.</p>
+          <div class="phoneme-table">
+            <div class="ph-row ph-header"><span>code</span><span>sounds like</span><span>example word</span></div>
+            <div class="ph-row"><span class="ph-code">IY</span><span>ee</span><span>b<b>ea</b>t</span></div>
+            <div class="ph-row"><span class="ph-code">IH</span><span>ih</span><span>b<b>i</b>t</span></div>
+            <div class="ph-row"><span class="ph-code">EY</span><span>ay</span><span>b<b>ai</b>t</span></div>
+            <div class="ph-row"><span class="ph-code">EH</span><span>eh</span><span>b<b>e</b>t</span></div>
+            <div class="ph-row"><span class="ph-code">AE</span><span>ae</span><span>c<b>a</b>t</span></div>
+            <div class="ph-row"><span class="ph-code">AA</span><span>ah (open)</span><span>f<b>a</b>ther</span></div>
+            <div class="ph-row"><span class="ph-code">AH</span><span>uh</span><span>c<b>u</b>p</span></div>
+            <div class="ph-row"><span class="ph-code">AO</span><span>aw</span><span>b<b>ough</b>t</span></div>
+            <div class="ph-row"><span class="ph-code">AW</span><span>ow</span><span>ab<b>ou</b>t</span></div>
+            <div class="ph-row"><span class="ph-code">AY</span><span>ai</span><span>b<b>i</b>te</span></div>
+            <div class="ph-row"><span class="ph-code">OW</span><span>oh</span><span>b<b>oa</b>t</span></div>
+            <div class="ph-row"><span class="ph-code">OY</span><span>oy</span><span>b<b>oy</b></span></div>
+            <div class="ph-row"><span class="ph-code">UH</span><span>uh (short)</span><span>b<b>oo</b>k</span></div>
+            <div class="ph-row"><span class="ph-code">UW</span><span>oo</span><span>b<b>oo</b>t</span></div>
+            <div class="ph-row"><span class="ph-code">ER</span><span>er</span><span>b<b>ir</b>d</span></div>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <div class="help-heading">consonants</div>
+          <p class="help-p">consonants add attack and release to syllables. they're short and don't hold pitch.</p>
+          <div class="phoneme-table" style="margin-bottom:0.8rem">
+            <div class="ph-row ph-header"><span>code</span><span>type</span><span>sounds like</span></div>
+            <div class="ph-row"><span class="ph-code">P</span><span>plosive</span><span><b>p</b>op</span></div>
+            <div class="ph-row"><span class="ph-code">B</span><span>plosive (voiced)</span><span><b>b</b>ob</span></div>
+            <div class="ph-row"><span class="ph-code">T</span><span>plosive</span><span><b>t</b>op</span></div>
+            <div class="ph-row"><span class="ph-code">D</span><span>plosive (voiced)</span><span><b>d</b>og</span></div>
+            <div class="ph-row"><span class="ph-code">K</span><span>plosive</span><span><b>k</b>ick</span></div>
+            <div class="ph-row"><span class="ph-code">G</span><span>plosive (voiced)</span><span><b>g</b>o</span></div>
+            <div class="ph-row"><span class="ph-code">F</span><span>fricative</span><span><b>f</b>un</span></div>
+            <div class="ph-row"><span class="ph-code">V</span><span>fricative (voiced)</span><span><b>v</b>an</span></div>
+            <div class="ph-row"><span class="ph-code">S</span><span>fricative</span><span><b>s</b>un</span></div>
+            <div class="ph-row"><span class="ph-code">Z</span><span>fricative (voiced)</span><span><b>z</b>oo</span></div>
+            <div class="ph-row"><span class="ph-code">SH</span><span>fricative</span><span><b>sh</b>oe</span></div>
+            <div class="ph-row"><span class="ph-code">ZH</span><span>fricative (voiced)</span><span>mea<b>s</b>ure</span></div>
+            <div class="ph-row"><span class="ph-code">TH</span><span>fricative</span><span><b>th</b>ink</span></div>
+            <div class="ph-row"><span class="ph-code">DH</span><span>fricative (voiced)</span><span><b>th</b>e</span></div>
+            <div class="ph-row"><span class="ph-code">HH</span><span>aspirate</span><span><b>h</b>ello</span></div>
+            <div class="ph-row"><span class="ph-code">M</span><span>nasal</span><span><b>m</b>om</span></div>
+            <div class="ph-row"><span class="ph-code">N</span><span>nasal</span><span><b>n</b>o</span></div>
+            <div class="ph-row"><span class="ph-code">NG</span><span>nasal</span><span>si<b>ng</b></span></div>
+            <div class="ph-row"><span class="ph-code">W</span><span>approximant</span><span><b>w</b>e</span></div>
+            <div class="ph-row"><span class="ph-code">Y</span><span>approximant</span><span><b>y</b>ou</span></div>
+            <div class="ph-row"><span class="ph-code">R</span><span>approximant</span><span><b>r</b>un</span></div>
+            <div class="ph-row"><span class="ph-code">L</span><span>approximant</span><span><b>l</b>ow</span></div>
+            <div class="ph-row"><span class="ph-code">CH</span><span>affricate</span><span><b>ch</b>ew</span></div>
+            <div class="ph-row"><span class="ph-code">JH</span><span>affricate (voiced)</span><span><b>j</b>oy</span></div>
+          </div>
+        </div>
+
+        <div class="help-section">
+          <div class="help-heading">per-syllable controls</div>
+          <div class="help-ctrl-row"><span class="help-ctrl-name">note</span><span>the pitch. c3 is low, b5 is high. a4 = 440hz. set via the piano roll or the note picker.</span></div>
+          <div class="help-ctrl-row"><span class="help-ctrl-name">duration</span><span>how long the syllable lasts in seconds.</span></div>
+        </div>
+
+        <div class="help-section">
+          <div class="help-heading">tips</div>
+          <ul class="help-list">
+            <li>start with simple words!</li>
+            <li>use the piano roll to draw melodies across syllables!</li>
+            <li>the share button encodes everything in the url, send it to someone!</li>
+          </ul>
+        </div>
+
+        <div class="help-section">
+          <div class="help-heading">what is formant synthesis?</div>
+          <p class="help-p">when you speak, your vocal cords buzz and your throat / mouth shapes into vowels by amplifying certain frequencies. those frequencies are called <b>formants</b>! this synth fakes the same process using the <a href="https://github.com/tgies/klattsch" target="_blank" rel="noopener noreferrer" style="color: var(--pink3); text-decoration: none; font-weight: 700;">klattsch engine</a>, which implements a parallel-formant synthesizer in your browser.</p>
+        </div>
+
+      </div>
+    </div>
+
+  <footer>
+    <div class="kaomoji">(. .)</div>
+    <div>made by <a href="https://discord.com/users/1500622215324897401" target="_blank" rel="noopener noreferrer" style="color: var(--pink-dark); text-decoration: none; font-weight: 700;">lace</a></div>
+    <div><a href="https://github.com/jantorialis/formant" target="_blank" rel="noopener noreferrer" style="color: var(--pink-dark); text-decoration: none; font-weight: 700;">source</a></div>
+  </footer>
+
+</main>
+<script type="importmap">
+  {
+    "imports": {
+      "klattsch": "https://esm.sh/klattsch"
+    }
+  }
+</script>
+<script type="module" src="js/ui.js"></script>
+</body>
+</html>
