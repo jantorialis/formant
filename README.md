@@ -191,17 +191,17 @@ in `makeSyl():`
 lace / torialis / jantorialis — development, ui, phoneme expansion, web integration
 
 ### core library
-klattsch — speech synthesizer by [tony gies](https://github.com/tgies/klattsch)
+[klattsch](https://github.com/tgies/klattsch) — speech synthesizer by [tony gies](https://github.com/tgies/)
 - formant synthesis engine
 - arpabet compiler
 - audioworklet processor
 
 ### fonts
-- m plus rounded 1c — by coji morishita
-- space mono — by  colophon foundry
+- [m plus rounded 1c](https://fonts.google.com/specimen/M+PLUS+Rounded+1c) — by coji morishita
+- [space mono](https://fonts.google.com/specimen/Space+Mono) — by  colophon foundry
 
 ### special thanks
-- tony gies for building klattsch and making it open source
+- [tony gies](https://github.com/tgies/) for building klattsch and making it open source
 
 ---
 
