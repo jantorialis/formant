@@ -188,7 +188,7 @@ in `makeSyl():`
 ## credits
 
 ### creator
-lace / jantorialis — design, development, ui, phoneme expansion, web integration
+lace / torialis / jantorialis — development, ui, phoneme expansion, web integration
 
 ### core library
 klattsch — speech synthesizer by [tony gies](https://github.com/tgies/klattsch)
