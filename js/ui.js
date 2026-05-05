@@ -204,6 +204,7 @@ document.addEventListener('DOMContentLoaded', () => {
     $('saveBtn').addEventListener('click', saveToLocalStorage);
     $('loadBtn').addEventListener('click', loadFromLocalStorage);
     $('clearSaveBtn').addEventListener('click', clearLocalStorage);
+    $('closeSylEditor').addEventListener('click', closeSylEditor);
 
     document.body.addEventListener('click', async function initAudioOnClick() {
         await initAudio();
@@ -391,6 +392,16 @@ function parseWords() {
 }
 
 function selectWord(wi) {
+    if (activeWIdx === wi) {
+        activeWIdx = null;
+        activeSIdx = null;
+        $('wordEditor').style.display = 'none';
+        $('sylEditor').style.display = 'none';
+        renderChips();
+        setStatus('');
+        return;
+    }
+    
     activeWIdx = wi;
     activeSIdx = null;
     const w = words[wi];
@@ -1113,6 +1124,12 @@ function loadFromLocalStorage() {
 function clearLocalStorage() {
     localStorage.removeItem('formant_save');
     setStatus('saved data cleared');
+}
+
+function closeSylEditor() {
+    $('sylEditor').style.display = 'none';
+    activeSIdx = null;
+    setStatus('syllable editor closed');
 }
 
 window.generateShareLink = generateShareLink;
