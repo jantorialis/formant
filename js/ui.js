@@ -3,7 +3,7 @@ import klattschEngine from './klattsch-engine.js';
 let words = [];
 let activeWIdx = null;
 let activeSIdx = null;
-let globalOpts = {};
+let globalOpts = { spacing: 0 };
 
 let audioInitialized = false;
 let stopRequested = false;
@@ -205,6 +205,7 @@ document.addEventListener('DOMContentLoaded', () => {
     $('loadBtn').addEventListener('click', loadFromLocalStorage);
     $('clearSaveBtn').addEventListener('click', clearLocalStorage);
     $('closeSylEditor').addEventListener('click', closeSylEditor);
+    $('sliderSpacing').addEventListener('input', e => updateGlobal('spacing', e.target.value));
 
     document.body.addEventListener('click', async function initAudioOnClick() {
         await initAudio();
@@ -474,6 +475,11 @@ function selectSyl(wi, si) {
             <button id="addPhonemeBtn" style="background:var(--mint); border:none; border-radius:20px; padding:4px 12px; font-family:var(--mono); font-size:0.7rem; cursor:pointer;">+ add</button>
             <button id="clearPhonemesBtn" style="background:var(--pink); border:none; border-radius:20px; padding:4px 12px; font-family:var(--mono); font-size:0.7rem; cursor:pointer;">clear all</button>
         </div>
+        <div style="margin-top: 12px; padding-top: 8px; border-top: 1px solid var(--border);">
+            <div style="font-size:0.7rem; font-weight:700; margin-bottom:6px;">or type phonemes (space separated)</div>
+            <input type="text" id="manualPhonemeInput" placeholder="e.g., B AA or HH AH L OW" style="font-family:var(--mono);font-size:0.75rem;padding:6px 10px;border-radius:20px;border:2px solid var(--border);background:var(--cream);width:100%;" />
+            <button id="applyPhonemeBtn" class="btn-sm" style="margin-top:6px;">apply</button>
+        </div>
     `;
     
     const sylEditorDiv = $('sylEditor');
@@ -560,6 +566,29 @@ function selectSyl(wi, si) {
         updatePhonemeListDisplay();
         renderSylStrip(wi);
     };
+    
+    const manualInput = document.getElementById('manualPhonemeInput');
+    const applyBtn = document.getElementById('applyPhonemeBtn');
+    
+    if (manualInput && applyBtn) {
+        manualInput.value = (words[wi].syllables[si].phonemes || [words[wi].syllables[si].phoneme || 'AA']).join(' ');
+        
+        const applyTypedPhonemes = () => {
+            const raw = manualInput.value.trim().toUpperCase();
+            if (raw) {
+                const phonemeArray = raw.split(/\s+/);
+                words[wi].syllables[si].phonemes = phonemeArray;
+                words[wi].syllables[si].phoneme = phonemeArray[0];
+                markModified(wi);
+                updatePhonemeListDisplay();
+                renderSylStrip(wi);
+                setStatus(`phonemes set to: ${raw}`);
+            }
+        };
+        
+        applyBtn.onclick = applyTypedPhonemes;
+        manualInput.onkeypress = (e) => { if (e.key === 'Enter') applyTypedPhonemes(); };
+    }
 
     const phonemePickerContainer = document.getElementById('phonemePicker');
     if (phonemePickerContainer) {
@@ -581,12 +610,12 @@ function selectSyl(wi, si) {
     const durSlider = document.getElementById('sylDur');
     
     if (bendSlider) {
-      bendSlider.oninput = (e) => {
-          const val = parseFloat(e.target.value);
-          words[wi].syllables[si].bend = val;
-          document.getElementById('sylBendVal').textContent = Math.round(val) + ' ct';
-          markModified(wi);
-      };
+        bendSlider.oninput = (e) => {
+            const val = parseFloat(e.target.value);
+            words[wi].syllables[si].bend = val;
+            document.getElementById('sylBendVal').textContent = Math.round(val) + ' ct';
+            markModified(wi);
+        };
     }
     if (durSlider) {
         durSlider.oninput = (e) => {
@@ -744,6 +773,11 @@ function buildNotePicker() {
 function updateGlobal(param, rawVal) {
     const val = parseFloat(rawVal);
     globalOpts[param] = val;
+    const fmts = {
+        spacing: v => Math.round(v) + ' ms',
+    };
+    const ids = { spacing: 'spacingVal' };
+    if (fmts[param]) $(ids[param]).textContent = fmts[param](val);
 }
 
 function noteToFreq(name) {
@@ -770,8 +804,10 @@ async function playSong() {
 
     let phonemeString = "";
     let syllableCount = 0;
+    let wordSpacingMs = globalOpts.spacing || 200;
     
-    for (const word of words) {
+    for (let w = 0; w < words.length; w++) {
+        const word = words[w];
         for (const syllable of word.syllables) {
             syllableCount++;
             
@@ -798,11 +834,13 @@ async function playSong() {
                 phonemeString += `b${noteName} ${firstPart} r${durationMs} ${lastPhoneme} `;
             }
         }
-        phonemeString += " ";
+        if (w < words.length - 1) {
+            phonemeString += `p${wordSpacingMs} `;
+        }
     }
     
     console.log("phoneme string:", phonemeString);
-    setStatus(`singing ${syllableCount} syllables`);
+    setStatus(`singing!`);
     
     $('playBtn').disabled = true;
     $('stopBtn').disabled = false;
@@ -812,7 +850,7 @@ async function playSong() {
     
     try {
         await klattschEngine.speak(phonemeString.trim());
-        setStatus('done');
+        setStatus('done ♪');
     } catch (e) {
         console.error('playback error:', e);
         setStatus('error: ' + e.message);
