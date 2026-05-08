@@ -205,6 +205,13 @@ lace / torialis / jantorialis — development, ui, phoneme expansion, web integr
 
 ---
 
+### third-party licenses
+- klattsch — mit license (c) 2025 tony gies
+- m plus rounded 1c — sil open font license 1.1
+- space mono — sil open font license 1.1
+
+---
+
 ### note for derivatives
 
 if you use this project as a base for your own work:
